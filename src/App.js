@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiSun, FiMoon, FiPlus, FiTrash2, FiFilter, FiCheck } from 'react-icons/fi';
 import './App.css';
+import { todoService } from './services/service';
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -14,11 +15,7 @@ function App() {
   const fetchTodos = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/get-todo');
-      if (!response.ok) {
-        throw new Error('获取待办事项失败');
-      }
-      const data = await response.json();
+      const data = await todoService.getTodos();
       setTodos(data);
       setError(null);
     } catch (err) {
@@ -35,19 +32,7 @@ function App() {
     if (!newTodo.trim()) return;
 
     try {
-      const response = await fetch('/api/add-todo', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ value: newTodo, isCompleted: false }),
-      });
-
-      if (!response.ok) {
-        throw new Error('添加待办事项失败');
-      }
-
-      const addedTodo = await response.json();
+      const addedTodo = await todoService.addTodo(newTodo);
       setTodos([...todos, addedTodo]);
       setNewTodo('');
     } catch (err) {
@@ -59,15 +44,7 @@ function App() {
   // 更新待办事项状态
   const toggleTodo = async (id) => {
     try {
-      const response = await fetch(`/api/update-todo/${id}`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        throw new Error('更新待办事项状态失败');
-      }
-
-      const updatedTodo = await response.json();
+      const updatedTodo = await todoService.updateTodo(id);
       setTodos(todos.map(todo => todo.id === id ? updatedTodo : todo));
     } catch (err) {
       setError('更新待办事项状态时出错: ' + err.message);
@@ -78,15 +55,7 @@ function App() {
   // 删除待办事项
   const deleteTodo = async (id) => {
     try {
-      const response = await fetch(`/api/del-todo/${id}`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        throw new Error('删除待办事项失败');
-      }
-
-      await response.json();
+      await todoService.deleteTodo(id);
       setTodos(todos.filter(todo => todo.id !== id));
     } catch (err) {
       setError('删除待办事项时出错: ' + err.message);
